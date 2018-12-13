@@ -20,6 +20,8 @@ Language changes
 Command-line option changes
 ---------------------------
 
+  * The code-coverage option now supports output in the LCOV tracefile format and
+    gets propagated to child processes, such as precompile steps and test workers ([#30381]).
 
 New library functions
 ---------------------
