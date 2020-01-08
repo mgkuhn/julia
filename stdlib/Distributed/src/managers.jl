@@ -61,7 +61,7 @@ A machine specification is either a string `machine_spec` or a tuple - `(machine
 `machine_spec` is a string of the form `[user@]host[:port] [bind_addr[:port]]`. `user`
 defaults to current user, `port` to the standard ssh port. If `[bind_addr[:port]]` is
 specified, other workers will connect to this worker at the specified `bind_addr` and
-`port`.
+`port`. IPv6 addresses can be specified by enclosing the address in square brackets.
 
 `count` is the number of workers to be launched on the specified host. If specified as
 `:auto` it will launch as many workers as the number of CPU threads on the specific host.
@@ -154,28 +154,24 @@ function launch_on_machine(manager::SSHManager, machine, cnt, params, launched, 
     # machine format string is split on whitespace
     machine_bind = split(machine)
     if isempty(machine_bind)
-        throw(ArgumentError("invalid machine definition format string: \"$machine\$"))
+        throw(ArgumentError("invalid machine definition format string: \"$machine\""))
     end
     if length(machine_bind) > 1
         exeflags = `--bind-to $(machine_bind[2]) $exeflags`
     end
     exeflags = `$exeflags --worker`
 
-    machine_def = split(machine_bind[1], ':')
     # if this machine def has a port number, add the port information to the ssh flags
-    if length(machine_def) > 2
-        throw(ArgumentError("invalid machine definition format string: invalid port format \"$machine_def\""))
+    # (a numeric IPv6 address needs to be in square brackets)
+    machine_def =
+        match(r"^((?:.*@)?)(?|([^:\[\]]+)|\[([^\[\]]+)\])(?::(\d+))?\z",
+              machine_bind[1])
+    if machine_def === nothing
+        throw(ArgumentError("invalid machine definition format string: \"$(machine_bind[1])\""))
     end
-    host = machine_def[1]
-    portopt = ``
-    if length(machine_def) == 2
-        portstr = machine_def[2]
-        if !all(isdigit, portstr) || (p = parse(Int,portstr); p < 1 || p > 65535)
-            msg = "invalid machine definition format string: invalid port format \"$machine_def\""
-            throw(ArgumentError(msg))
-        end
-        portopt = ` -p $(machine_def[2]) `
-    end
+    user, host, port = machine_def.captures
+    host = user * host
+    portopt = (port === nothing) ? `` : ` -p $port`
     sshflags = `$(params[:sshflags]) $portopt`
 
     # Build up the ssh command

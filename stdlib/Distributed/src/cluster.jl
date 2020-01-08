@@ -230,7 +230,7 @@ function start_worker(out::IO, cookie::AbstractString=readline(stdin); close_std
     stderr_to_stdout && redirect_stderr(stdout)
 
     init_worker(cookie)
-    interface = IPv4(LPROC.bind_addr)
+    interface = IPAddr(LPROC.bind_addr)
     if LPROC.bind_port == 0
         port_hint = 9000 + (getpid() % 1000)
         (port, sock) = listenany(interface, UInt16(port_hint))
@@ -1232,9 +1232,11 @@ end
 function init_bind_addr()
     opts = JLOptions()
     if opts.bindto != C_NULL
-        bind_to = split(unsafe_string(opts.bindto), ":")
+        bind_to = match(r"^(?|([^:\[\]]*)|\[([^\[\]]*)\])(?::(\d+))?\z",
+                        unsafe_string(opts.bindto))
+        @error "unexpected --bind-to argument \"$(unsafe_string(opts.bindto))\""
         bind_addr = string(parse(IPAddr, bind_to[1]))
-        if length(bind_to) > 1
+        if bind_to[2] !== nothing
             bind_port = parse(Int,bind_to[2])
         else
             bind_port = 0
