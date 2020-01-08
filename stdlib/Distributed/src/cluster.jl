@@ -1244,7 +1244,12 @@ function init_bind_addr()
     else
         bind_port = 0
         try
-            bind_addr = string(getipaddr())
+            if haskey(ENV, "SSH_CONNECTION")
+                # reuse the IP address that ssh already used to get here
+                bind_addr = split(ENV["SSH_CONNECTION"], ' ')[3]
+            else
+                bind_addr = string(first(filter(!islinklocaladdr, getipaddrs())))
+            end
         catch
             # All networking is unavailable, initialize bind_addr to the loopback address
             # Will cause an exception to be raised only when used.
