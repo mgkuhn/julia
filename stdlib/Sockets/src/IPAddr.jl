@@ -251,6 +251,9 @@ function parse(::Type{IPAddr}, str::AbstractString)
     end
 end
 
+# constructor
+IPAddr(str::AbstractString) = parse(IPAddr, str)
+
 """
     @ip_str str -> IPAddr
 
