@@ -245,9 +245,12 @@ function _bind(sock::UDPSocket, host::Union{IPv4, IPv6}, port::UInt16, flags::UI
 end
 
 """
-    bind(socket::Union{UDPSocket, TCPSocket}, host::IPAddr, port::Integer; ipv6only=false, reuseaddr=false, kws...)
+    bind(socket::Union{TCPServer, UDPSocket}, host::IPAddr, port::Integer; ipv6only=false, reuseaddr=false, kws...)
 
-Bind `socket` to the given `host:port`. Note that `0.0.0.0` will listen on all devices.
+Bind `socket` to the given `host` IP address and `port` number.
+
+To listen on all IPv4 interfaces pass `IPv4(0)` and to listen on
+all IPv4 or IPv6 interfaces pass `IPv6(0)` as `host`.
 
 * The `ipv6only` parameter disables dual stack mode. If `ipv6only=true`, only an IPv6 stack is created.
 * If `reuseaddr=true`, multiple threads or processes can bind to the same address without error
@@ -598,9 +601,12 @@ const BACKLOG_DEFAULT = 511
 """
     listen([addr, ]port::Integer; backlog::Integer=BACKLOG_DEFAULT) -> TCPServer
 
-Listen on port on the address specified by `addr`.
-By default this listens on `localhost` only.
-To listen on all interfaces pass `IPv4(0)` or `IPv6(0)` as appropriate.
+Listen on `port` on the address specified by `addr`.
+
+By default this listens only on `localhost` (= `ip"127.0.0.1"`).
+To listen on all IPv4 interfaces pass `IPv4(0)` and to listen on
+all IPv4 or IPv6 interfaces pass `IPv6(0)` as `addr`.
+
 `backlog` determines how many connections can be pending (not having
 called [`accept`](@ref)) before the server will begin to
 reject them. The default value of `backlog` is 511.
